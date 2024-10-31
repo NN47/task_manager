@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер задач</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 500px; margin: auto; padding: 20px; }
+        input, button { margin: 5px 0; padding: 10px; width: 100%; }
+        .task { padding: 10px; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Менеджер задач</h1>
+
+        <div id="auth">
+            <input type="text" id="username" placeholder="Имя пользователя">
+            <input type="password" id="password" placeholder="Пароль">
+            <button onclick="register()">Регистрация</button>
+            <button onclick="login()">Войти</button>
+        </div>
+
+        <div id="task-manager" style="display:none;">
+            <h2>Добавить новую задачу</h2>
+            <input type="text" id="task" placeholder="Название задачи">
+            <button onclick="addTask()">Добавить задачу</button>
+
+            <h2>Список задач</h2>
+            <div id="tasks"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function register() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!username || !password) {
+                alert("Введите имя пользователя и пароль.");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem("users")) || {};
+
+            if (users[username]) {
+                alert("Пользователь уже существует.");
+                return;
+            }
+
+            users[username] = { password, tasks: [] };
+            localStorage.setItem("users", JSON.stringify(users));
+
+            alert("Регистрация успешна! Теперь вы можете войти.");
+        }
+
+        function login() {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value.trim();
+            let users = JSON.parse(localStorage.getItem("users")) || {};
+
+            if (!users[username] || users[username].password !== password) {
+                alert("Неверное имя пользователя или пароль.");
+                return;
+            }
+
+            currentUser = username;
+            document.getElementById("auth").style.display = "none";
+            document.getElementById("task-manager").style.display = "block";
+            loadTasks();
+        }
+
+        function addTask() {
+            const taskName = document.getElementById("task").value.trim();
+            if (!taskName) {
+                alert("Введите название задачи.");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem("users"));
+            users[currentUser].tasks.push({ name: taskName, completed: false });
+            localStorage.setItem("users", JSON.stringify(users));
+            document.getElementById("task").value = "";
+            loadTasks();
+        }
+
+        function loadTasks() {
+            const tasksContainer = document.getElementById("tasks");
+            tasksContainer.innerHTML = "";
+
+            let users = JSON.parse(localStorage.getItem("users"));
+            const tasks = users[currentUser].tasks;
+
+            tasks.forEach((task, index) => {
+                tasksContainer.innerHTML += `
+                    <div class="task">
+                        <input type="checkbox" ${task.completed ? "checked" : ""} onclick="toggleTask(${index})">
+                        <span>${task.name}</span>
+                        <button onclick="deleteTask(${index})">Удалить</button>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleTask(index) {
+            let users = JSON.parse(localStorage.getItem("users"));
+            users[currentUser].tasks[index].completed = !users[currentUser].tasks[index].completed;
+            localStorage.setItem("users", JSON.stringify(users));
+            loadTasks();
+        }
+
+        function deleteTask(index) {
+            let users = JSON.parse(localStorage.getItem("users"));
+            users[currentUser].tasks.splice(index, 1);
+            localStorage.setItem("users", JSON.stringify(users));
+            loadTasks();
+        }
+    </script>
+</body>
+</html>
+
